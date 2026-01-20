@@ -185,6 +185,10 @@ def render_poster(city, country, point, graph, water, parks, theme, fonts,
     print("Applying road hierarchy colors...")
     edge_colors = get_edge_colors_by_type(graph_proj, theme)
     edge_widths = get_edge_widths_by_type(graph_proj)
+    # Scale road linewidths with figure height to maintain proportions across sizes
+    _fig_w, _fig_h = figsize
+    _scale_y_edges = _fig_h / BASE_FIGURE_HEIGHT
+    edge_widths = [w * _scale_y_edges for w in edge_widths]
     
     ox.plot_graph(
         graph_proj, ax=ax, bgcolor=theme['bg'],
