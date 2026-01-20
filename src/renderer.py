@@ -161,32 +161,62 @@ def render_poster(city, country, point, graph, water, parks, theme, fonts,
     fig, ax = plt.subplots(figsize=figsize, facecolor=theme['bg'])
     ax.set_facecolor(theme['bg'])
     ax.set_position((0, 0, 1, 1))
-    ax.set_aspect('equal')
+    
+    # Project graph to UTM for proper metric plotting
+    graph_proj = ox.project_graph(graph)
     
     # Plot Layers
     # Layer 1: Polygons (filter to only plot polygon/multipolygon geometries)
     if water is not None and not water.empty:
         water_polys = water[water.geometry.type.isin(['Polygon', 'MultiPolygon'])]
         if not water_polys.empty:
+            # Project water to same CRS as graph
+            water_polys = water_polys.to_crs(graph_proj.graph['crs'])
             water_polys.plot(ax=ax, facecolor=theme['water'], edgecolor='none', zorder=1)
     
     if parks is not None and not parks.empty:
         parks_polys = parks[parks.geometry.type.isin(['Polygon', 'MultiPolygon'])]
         if not parks_polys.empty:
+            # Project parks to same CRS as graph
+            parks_polys = parks_polys.to_crs(graph_proj.graph['crs'])
             parks_polys.plot(ax=ax, facecolor=theme['parks'], edgecolor='none', zorder=2)
     
     # Layer 2: Roads with hierarchy coloring
     print("Applying road hierarchy colors...")
-    edge_colors = get_edge_colors_by_type(graph, theme)
-    edge_widths = get_edge_widths_by_type(graph)
+    edge_colors = get_edge_colors_by_type(graph_proj, theme)
+    edge_widths = get_edge_widths_by_type(graph_proj)
     
     ox.plot_graph(
-        graph, ax=ax, bgcolor=theme['bg'],
+        graph_proj, ax=ax, bgcolor=theme['bg'],
         node_size=0,
         edge_color=edge_colors,
         edge_linewidth=edge_widths,
         show=False, close=False
     )
+    
+    # Set equal aspect to prevent geographic distortion
+    ax.set_aspect('equal', adjustable='datalim')
+    
+    # Adjust data limits to match figure aspect ratio
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    x_center = (xlim[0] + xlim[1]) / 2
+    y_center = (ylim[0] + ylim[1]) / 2
+    x_range = xlim[1] - xlim[0]
+    y_range = ylim[1] - ylim[0]
+    
+    fig_width, fig_height = figsize
+    target_aspect = fig_width / fig_height  # 12/16 = 0.75
+    current_aspect = x_range / y_range
+    
+    if current_aspect > target_aspect:
+        # Data is wider than figure, need to expand vertically
+        new_y_range = x_range / target_aspect
+        ax.set_ylim(y_center - new_y_range/2, y_center + new_y_range/2)
+    else:
+        # Data is taller than figure, need to expand horizontally
+        new_x_range = y_range * target_aspect
+        ax.set_xlim(x_center - new_x_range/2, x_center + new_x_range/2)
     
     # Layer 3: Gradients (All edges)
     create_gradient_fade(ax, theme['gradient_color'], location='bottom', zorder=10)
