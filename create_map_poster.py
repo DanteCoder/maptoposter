@@ -8,20 +8,14 @@ import sys
 import traceback
 
 from src import (
-    load_theme,
-    load_fonts,
-    get_coordinates,
-    fetch_map_data,
-    render_poster,
-    generate_output_filename,
     calculate_dpi_from_resolution,
-    calculate_bbox,
     create_parser,
     validate_args,
+    generate_single_poster,
+    generate_all_themes,
     DEFAULT_FIGSIZE,
     DEFAULT_DPI
 )
-
 
 
 def main():
@@ -44,38 +38,28 @@ def main():
         dpi = DEFAULT_DPI
         print(f"✓ Using default DPI: {dpi}")
     
+    # Handle all-themes mode
+    if args.all_themes:
+        generate_all_themes(
+            args.city, args.country, args.distance, 
+            args.format, dpi, figsize
+        )
+        return
+    
     print("=" * 50)
     print("City Map Poster Generator")
     print("=" * 50)
     
-    # Load theme and fonts
-    theme = load_theme(args.theme)
-    fonts = load_fonts()
-    
-    # Get coordinates and generate poster
+    # Generate single poster
     try:
-        print(f"\nGenerating map for {args.city}, {args.country}...")
-        
-        coords = get_coordinates(args.city, args.country)
-        bbox = calculate_bbox(coords, args.distance, figsize)
-        
-        # Fetch map data
-        graph, water, parks = fetch_map_data(bbox)
-        
-        # Generate output filename
-        output_file = generate_output_filename(args.city, args.theme, args.format)
-        
-        # Render poster
-        render_poster(
-            args.city, args.country, coords,
-            graph, water, parks,
-            theme, fonts,
-            output_file, args.format,
-            dpi=dpi, figsize=figsize
+        output_file = generate_single_poster(
+            args.city, args.country, args.theme, args.distance,
+            args.format, dpi, figsize
         )
         
         print("\n" + "=" * 50)
         print("✓ Poster generation complete!")
+        print(f"📁 Saved to: {output_file}")
         print("=" * 50)
         
     except Exception as e:

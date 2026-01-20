@@ -21,6 +21,13 @@ def generate_output_filename(city, theme_name, output_format):
     return os.path.join(POSTERS_DIR, filename)
 
 
+def generate_city_folder_name(city):
+    """
+    Generate a folder name for a city (sanitized for filesystem).
+    """
+    return city.lower().replace(' ', '_').replace('/', '_').replace('\\', '_')
+
+
 def parse_resolution(resolution_str):
     """
     Parse resolution string (e.g., '3840x2160') and return width, height.

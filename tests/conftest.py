@@ -76,3 +76,32 @@ def sample_theme():
 def sample_coordinates():
     """Return sample coordinates for testing."""
     return (40.7128, -74.0060)  # New York City
+
+
+@pytest.fixture
+def mock_theme():
+    """Return a mock theme dictionary for testing."""
+    return {
+        "name": "Mock Theme",
+        "bg": "#FFFFFF",
+        "text": "#000000",
+        "gradient_color": "#FFFFFF",
+        "water": "#C0C0C0",
+        "parks": "#F0F0F0",
+        "road_motorway": "#0A0A0A",
+        "road_primary": "#1A1A1A",
+        "road_secondary": "#2A2A2A",
+        "road_tertiary": "#3A3A3A",
+        "road_residential": "#4A4A4A",
+        "road_default": "#3A3A3A"
+    }
+
+
+@pytest.fixture
+def mock_fonts():
+    """Return mock fonts dictionary for testing."""
+    return {
+        'bold': '/path/to/Roboto-Bold.ttf',
+        'regular': '/path/to/Roboto-Regular.ttf',
+        'light': '/path/to/Roboto-Light.ttf'
+    }

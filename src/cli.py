@@ -46,6 +46,9 @@ Examples:
   
   # List themes
   python create_map_poster.py --list-themes
+  
+  # Generate all themes for a city
+  python create_map_poster.py --city "Tokyo" --country "Japan" --all-themes
 
 Options:
   --city, -c        City name (required)
@@ -74,6 +77,7 @@ Examples:
   python create_map_poster.py --city "New York" --country "USA"
   python create_map_poster.py --city Tokyo --country Japan --theme midnight_blue
   python create_map_poster.py --city Paris --country France --theme noir --distance 15000
+  python create_map_poster.py --city "Tokyo" --country "Japan" --all-themes
   python create_map_poster.py --list-themes
         """
     )
@@ -83,6 +87,7 @@ Examples:
     parser.add_argument('--theme', '-t', type=str, default='feature_based', help='Theme name (default: feature_based)')
     parser.add_argument('--distance', '-d', type=int, default=29000, help='Map radius in meters (default: 29000)')
     parser.add_argument('--list-themes', action='store_true', help='List all available themes')
+    parser.add_argument('--all-themes', action='store_true', help='Generate posters for all available themes')
     parser.add_argument('--format', '-f', default='png', choices=['png', 'svg', 'pdf'], help='Output format for the poster (default: png)')
     parser.add_argument('--resolution', '-r', type=str, help='Output resolution in pixels (e.g., 3840x2160). Cannot be used with --dpi.')
     parser.add_argument('--dpi', type=int, help='DPI for PNG output. Cannot be used with --resolution.')
@@ -112,12 +117,14 @@ def validate_args(args):
         print_examples()
         sys.exit(1)
     
-    # Validate theme exists
-    available_themes = get_available_themes()
-    if args.theme not in available_themes:
-        print(f"Error: Theme '{args.theme}' not found.")
-        print(f"Available themes: {', '.join(available_themes)}")
-        sys.exit(1)
+    # If --all-themes is specified, skip individual theme validation
+    if not args.all_themes:
+        # Validate theme exists
+        available_themes = get_available_themes()
+        if args.theme not in available_themes:
+            print(f"Error: Theme '{args.theme}' not found.")
+            print(f"Available themes: {', '.join(available_themes)}")
+            sys.exit(1)
     
     # Validate resolution and dpi arguments
     if args.resolution and args.dpi:
