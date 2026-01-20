@@ -27,3 +27,16 @@ FONT_SIZE_ATTRIBUTION = 8
 BASE_FONT_SIZE = 60
 MIN_FONT_SIZE = 24
 MAX_CITY_CHARS = 10  # Chars before scaling kicks in
+
+# Text positioning (absolute distances from bottom in inches)
+TEXT_CITY_POSITION = 2.0
+TEXT_LINE_POSITION = 1.75
+TEXT_COUNTRY_POSITION = 1.4
+TEXT_COORDS_POSITION = 1.0
+
+# Decorative line dimensions (absolute in inches)
+LINE_WIDTH_INCHES = 2.4  # Total line width in inches
+
+# Font scaling reference (base figure dimensions in inches)
+BASE_FIGURE_HEIGHT = 16.0
+BASE_FIGURE_WIDTH = 12.0

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import osmnx as ox
 
-from .config import BASE_FONT_SIZE, MIN_FONT_SIZE, MAX_CITY_CHARS, DEFAULT_FIGSIZE, DEFAULT_DPI
+from .config import BASE_FONT_SIZE, MIN_FONT_SIZE, MAX_CITY_CHARS, DEFAULT_FIGSIZE, DEFAULT_DPI, TEXT_CITY_POSITION, TEXT_LINE_POSITION, TEXT_COUNTRY_POSITION, TEXT_COORDS_POSITION, BASE_FIGURE_HEIGHT, BASE_FIGURE_WIDTH, LINE_WIDTH_INCHES
 from .theme import create_font_properties
 
 
@@ -226,15 +226,43 @@ def render_poster(city, country, point, graph, water, parks, theme, fonts,
     
     # Typography
     adjusted_font_size = calculate_dynamic_font_size(city)
-    font_props = create_font_properties(fonts, adjusted_font_size)
+    font_props = create_font_properties(fonts, adjusted_font_size, figsize)
     
     spaced_city = "  ".join(list(city.upper()))
     
+    # Calculate text positions in absolute units (inches from bottom)
+    # Scale positions proportionally with figure height to maintain spacing
+    fig_width, fig_height = figsize
+    scale_factor_y = fig_height / BASE_FIGURE_HEIGHT
+    scale_factor_x = fig_width / BASE_FIGURE_WIDTH
+    
+    # Scale text positions
+    city_inches = TEXT_CITY_POSITION * scale_factor_y
+    line_inches = TEXT_LINE_POSITION * scale_factor_y
+    country_inches = TEXT_COUNTRY_POSITION * scale_factor_y
+    coords_inches = TEXT_COORDS_POSITION * scale_factor_y
+    
+    # Normalize to figure height for transform=ax.transAxes
+    city_y = city_inches / fig_height
+    line_y = line_inches / fig_height
+    country_y = country_inches / fig_height
+    coords_y = coords_inches / fig_height
+    
+    # Scale line width and horizontal position based on height (like text) to maintain proportions
+    line_width = 1.0 * scale_factor_y
+    line_half_width_inches = (LINE_WIDTH_INCHES / 2) * scale_factor_y
+    line_half_width_norm = line_half_width_inches / fig_width
+    line_x_start = 0.5 - line_half_width_norm
+    line_x_end = 0.5 + line_half_width_norm
+    
     # Bottom text
-    ax.text(0.5, 0.14, spaced_city, transform=ax.transAxes,
+    ax.text(0.5, city_y, spaced_city, transform=ax.transAxes,
             color=theme['text'], ha='center', fontproperties=font_props['main'], zorder=11)
     
-    ax.text(0.5, 0.10, country.upper(), transform=ax.transAxes,
+    ax.plot([line_x_start, line_x_end], [line_y, line_y], transform=ax.transAxes, 
+            color=theme['text'], linewidth=line_width, zorder=11)
+    
+    ax.text(0.5, country_y, country.upper(), transform=ax.transAxes,
             color=theme['text'], ha='center', fontproperties=font_props['sub'], zorder=11)
     
     lat, lon = point
@@ -242,11 +270,8 @@ def render_poster(city, country, point, graph, water, parks, theme, fonts,
     if lon < 0:
         coords = coords.replace("E", "W")
     
-    ax.text(0.5, 0.07, coords, transform=ax.transAxes,
+    ax.text(0.5, coords_y, coords, transform=ax.transAxes,
             color=theme['text'], alpha=0.7, ha='center', fontproperties=font_props['coords'], zorder=11)
-    
-    ax.plot([0.4, 0.6], [0.125, 0.125], transform=ax.transAxes, 
-            color=theme['text'], linewidth=1, zorder=11)
     
     # Attribution (bottom right)
     ax.text(0.98, 0.02, "© OpenStreetMap contributors", transform=ax.transAxes,

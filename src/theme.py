@@ -4,7 +4,7 @@ import json
 import os
 from matplotlib.font_manager import FontProperties
 
-from .config import THEMES_DIR, FONTS_DIR, FONT_SIZE_CITY, FONT_SIZE_COUNTRY, FONT_SIZE_COORDS, FONT_SIZE_ATTRIBUTION
+from .config import THEMES_DIR, FONTS_DIR, FONT_SIZE_CITY, FONT_SIZE_COUNTRY, FONT_SIZE_COORDS, FONT_SIZE_ATTRIBUTION, BASE_FIGURE_HEIGHT
 
 
 def load_fonts():
@@ -75,27 +75,34 @@ def load_theme(theme_name="feature_based"):
         return theme
 
 
-def create_font_properties(fonts, adjusted_city_font_size=None):
+def create_font_properties(fonts, adjusted_city_font_size=None, figsize=None):
     """
     Create FontProperties objects for different text elements.
     Returns a dict with font properties for: main, sub, coords, attr.
+    Scales font sizes based on figure height to maintain proportions.
     """
+    # Scale factor based on figure height
+    if figsize:
+        scale_factor = figsize[1] / BASE_FIGURE_HEIGHT
+    else:
+        scale_factor = 1.0
+    
     if fonts:
         city_size = adjusted_city_font_size if adjusted_city_font_size else FONT_SIZE_CITY
         return {
-            'main': FontProperties(fname=fonts['bold'], size=city_size),
-            'sub': FontProperties(fname=fonts['light'], size=FONT_SIZE_COUNTRY),
-            'coords': FontProperties(fname=fonts['regular'], size=FONT_SIZE_COORDS),
-            'attr': FontProperties(fname=fonts['light'], size=FONT_SIZE_ATTRIBUTION)
+            'main': FontProperties(fname=fonts['bold'], size=city_size * scale_factor),
+            'sub': FontProperties(fname=fonts['light'], size=FONT_SIZE_COUNTRY * scale_factor),
+            'coords': FontProperties(fname=fonts['regular'], size=FONT_SIZE_COORDS * scale_factor),
+            'attr': FontProperties(fname=fonts['light'], size=FONT_SIZE_ATTRIBUTION * scale_factor)
         }
     else:
         # Fallback to system fonts
         city_size = adjusted_city_font_size if adjusted_city_font_size else FONT_SIZE_CITY
         return {
-            'main': FontProperties(family='monospace', weight='bold', size=city_size),
-            'sub': FontProperties(family='monospace', weight='normal', size=FONT_SIZE_COUNTRY),
-            'coords': FontProperties(family='monospace', size=FONT_SIZE_COORDS),
-            'attr': FontProperties(family='monospace', size=FONT_SIZE_ATTRIBUTION)
+            'main': FontProperties(family='monospace', weight='bold', size=city_size * scale_factor),
+            'sub': FontProperties(family='monospace', weight='normal', size=FONT_SIZE_COUNTRY * scale_factor),
+            'coords': FontProperties(family='monospace', size=FONT_SIZE_COORDS * scale_factor),
+            'attr': FontProperties(family='monospace', size=FONT_SIZE_ATTRIBUTION * scale_factor)
         }
 
 
