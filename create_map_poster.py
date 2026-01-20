@@ -52,6 +52,17 @@ THEMES_DIR = "themes"
 FONTS_DIR = "fonts"
 POSTERS_DIR = "posters"
 
+# Font size constants for 16:9 landscape layout
+FONT_SIZE_CITY = 40
+FONT_SIZE_COUNTRY = 16
+FONT_SIZE_COORDS = 10
+FONT_SIZE_ATTRIBUTION = 8
+
+# Dynamic font sizing for long city names
+BASE_FONT_SIZE = 40
+MIN_FONT_SIZE = 24
+MAX_CITY_CHARS = 10  # Chars before scaling kicks in
+
 def load_fonts():
     """
     Load Roboto fonts from the fonts directory.
@@ -137,37 +148,65 @@ THEME = None  # Will be loaded later
 
 def create_gradient_fade(ax, color, location='bottom', zorder=10):
     """
-    Creates a fade effect at the top or bottom of the map.
+    Creates a fade effect at the edges of the map.
+    Supports: 'bottom', 'top', 'left', 'right'
     """
-    vals = np.linspace(0, 1, 256).reshape(-1, 1)
-    gradient = np.hstack((vals, vals))
-    
     rgb = mcolors.to_rgb(color)
-    my_colors = np.zeros((256, 4))
-    my_colors[:, 0] = rgb[0]
-    my_colors[:, 1] = rgb[1]
-    my_colors[:, 2] = rgb[2]
-    
-    if location == 'bottom':
-        my_colors[:, 3] = np.linspace(1, 0, 256)
-        extent_y_start = 0
-        extent_y_end = 0.25
-    else:
-        my_colors[:, 3] = np.linspace(0, 1, 256)
-        extent_y_start = 0.75
-        extent_y_end = 1.0
-
-    custom_cmap = mcolors.ListedColormap(my_colors)
     
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
+    x_range = xlim[1] - xlim[0]
     y_range = ylim[1] - ylim[0]
     
-    y_bottom = ylim[0] + y_range * extent_y_start
-    y_top = ylim[0] + y_range * extent_y_end
+    if location in ['bottom', 'top']:
+        vals = np.linspace(0, 1, 256).reshape(-1, 1)
+        gradient = np.hstack((vals, vals))
+        
+        my_colors = np.zeros((256, 4))
+        my_colors[:, 0] = rgb[0]
+        my_colors[:, 1] = rgb[1]
+        my_colors[:, 2] = rgb[2]
+        
+        if location == 'bottom':
+            my_colors[:, 3] = np.linspace(1, 0, 256)
+            extent_y_start = 0
+            extent_y_end = 0.15
+        else:  # top
+            my_colors[:, 3] = np.linspace(0, 1, 256)
+            extent_y_start = 0.85
+            extent_y_end = 1.0
+        
+        y_bottom = ylim[0] + y_range * extent_y_start
+        y_top = ylim[0] + y_range * extent_y_end
+        
+        custom_cmap = mcolors.ListedColormap(my_colors)
+        ax.imshow(gradient, extent=[xlim[0], xlim[1], y_bottom, y_top], 
+                  aspect='auto', cmap=custom_cmap, zorder=zorder, origin='lower')
     
-    ax.imshow(gradient, extent=[xlim[0], xlim[1], y_bottom, y_top], 
-              aspect='auto', cmap=custom_cmap, zorder=zorder, origin='lower')
+    else:  # left or right
+        vals = np.linspace(0, 1, 256).reshape(1, -1)
+        gradient = np.vstack((vals, vals))
+        
+        my_colors = np.zeros((256, 4))
+        my_colors[:, 0] = rgb[0]
+        my_colors[:, 1] = rgb[1]
+        my_colors[:, 2] = rgb[2]
+        
+        if location == 'left':
+            my_colors[:, 3] = np.linspace(1, 0, 256)
+            extent_x_start = 0
+            extent_x_end = 0.10
+        else:  # right
+            my_colors[:, 3] = np.linspace(0, 1, 256)
+            extent_x_start = 0.90
+            extent_x_end = 1.0
+        
+        x_left = xlim[0] + x_range * extent_x_start
+        x_right = xlim[0] + x_range * extent_x_end
+        
+        custom_cmap = mcolors.ListedColormap(my_colors)
+        ax.imshow(gradient, extent=[x_left, x_right, ylim[0], ylim[1]], 
+                  aspect='auto', cmap=custom_cmap, zorder=zorder, origin='lower')
 
 def get_edge_colors_by_type(G):
     """
@@ -261,20 +300,21 @@ def get_coordinates(city, country):
     else:
         raise ValueError(f"Could not find coordinates for {city}, {country}")
 
-def fetch_graph(point, dist):
-    lat, lon = point
-    graph = f"graph_{lat}_{lon}_{dist}"
-    cached = cache_get(graph)
+def fetch_graph_bbox(bbox):
+    """Fetch graph using bbox with caching."""
+    west, south, east, north = bbox
+    graph_key = f"graph_bbox_{west}_{south}_{east}_{north}"
+    cached = cache_get(graph_key)
     if cached is not None:
         print("✓ Using cached street network")
         return cached
-
+    
     try:
-        G = ox.graph_from_point(point, dist=dist, dist_type='bbox', network_type='all')
+        G = ox.graph_from_bbox(bbox=bbox, network_type='all')
         # Rate limit between requests
         time.sleep(0.5)
         try:
-            cache_set(graph, G)
+            cache_set(graph_key, G)
         except CacheError as e:
             print(e)
         return G
@@ -282,21 +322,22 @@ def fetch_graph(point, dist):
         print(f"OSMnx error while fetching graph: {e}")
         return None
 
-def fetch_features(point, dist, tags, name):
-    lat, lon = point
+def fetch_features_bbox(bbox, tags, name):
+    """Fetch features using bbox with caching."""
+    west, south, east, north = bbox
     tag_str = "_".join(tags.keys())
-    features = f"{name}_{lat}_{lon}_{dist}_{tag_str}"
-    cached = cache_get(features)
+    features_key = f"{name}_bbox_{west}_{south}_{east}_{north}_{tag_str}"
+    cached = cache_get(features_key)
     if cached is not None:
         print(f"✓ Using cached {name}")
         return cached
-
+    
     try:
-        data = ox.features_from_point(point, tags=tags, dist=dist)
+        data = ox.features_from_bbox(bbox=bbox, tags=tags)
         # Rate limit between requests
         time.sleep(0.3)
         try:
-            cache_set(features, data)
+            cache_set(features_key, data)
         except CacheError as e:
             print(e)
         return data
@@ -307,30 +348,51 @@ def fetch_features(point, dist, tags, name):
 def create_poster(city, country, point, dist, output_file, output_format):
     print(f"\nGenerating map for {city}, {country}...")
     
+    # Calculate 16:9 bounding box where dist is the longest side (width)
+    lat, lon = point
+    
+    # Convert distance to degrees (approximate)
+    # 1 degree latitude ≈ 111km
+    # 1 degree longitude ≈ 111km * cos(latitude)
+    # For 16:9, horizontal (longest side) = dist, vertical = dist * (9/16)
+    lon_dist_deg = dist / (111000 * np.cos(np.radians(lat)))
+    lat_dist_deg = (dist * 9/16) / 111000
+    
+    north = lat + lat_dist_deg
+    south = lat - lat_dist_deg
+    east = lon + lon_dist_deg
+    west = lon - lon_dist_deg
+    
+    bbox = (west, south, east, north)
+    
     # Progress bar for data fetching
     with tqdm(total=3, desc="Fetching map data", unit="step", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
         # 1. Fetch Street Network
         pbar.set_description("Downloading street network")
-        G = fetch_graph(point, dist)
+        G = fetch_graph_bbox(bbox)
         pbar.update(1)
         
         # 2. Fetch Water Features
         pbar.set_description("Downloading water features")
-        water = fetch_features(point, dist, {'natural': 'water', 'waterway': 'riverbank'}, 'water')
+        water = fetch_features_bbox(bbox, {'natural': 'water', 'waterway': 'riverbank'}, 'water')
         pbar.update(1)
         
         # 3. Fetch Parks
         pbar.set_description("Downloading parks/green spaces")
-        parks = fetch_features(point, dist, {'leisure': 'park', 'landuse': 'grass'}, 'parks')
+        parks = fetch_features_bbox(bbox, {'leisure': 'park', 'landuse': 'grass'}, 'parks')
         pbar.update(1)
     
-    print("✓ All data retrieved successfully!")
+    print("✓ All data downloaded successfully!")
     
     # 2. Setup Plot
     print("Rendering map...")
-    fig, ax = plt.subplots(figsize=(12, 16), facecolor=THEME['bg'])
+    # Set figsize to 16:9 aspect ratio (landscape)
+    fig, ax = plt.subplots(figsize=(16, 9), facecolor=THEME['bg'])
     ax.set_facecolor(THEME['bg'])
     ax.set_position([0, 0, 1, 1])
+    
+    # Maintain equal aspect ratio to preserve geographic proportions
+    ax.set_aspect('equal')
     
     # 3. Plot Layers
     # Layer 1: Polygons (filter to only plot polygon/multipolygon geometries, not points)
@@ -359,34 +421,33 @@ def create_poster(city, country, point, dist, output_file, output_format):
         show=False, close=False
     )
     
-    # Layer 3: Gradients (Top and Bottom)
+    # Layer 3: Gradients (All edges)
     create_gradient_fade(ax, THEME['gradient_color'], location='bottom', zorder=10)
     create_gradient_fade(ax, THEME['gradient_color'], location='top', zorder=10)
+    create_gradient_fade(ax, THEME['gradient_color'], location='left', zorder=10)
+    create_gradient_fade(ax, THEME['gradient_color'], location='right', zorder=10)
     
     # 4. Typography using Roboto font
     if FONTS:
-        font_main = FontProperties(fname=FONTS['bold'], size=60)
-        font_top = FontProperties(fname=FONTS['bold'], size=40)
-        font_sub = FontProperties(fname=FONTS['light'], size=22)
-        font_coords = FontProperties(fname=FONTS['regular'], size=14)
+        font_sub = FontProperties(fname=FONTS['light'], size=FONT_SIZE_COUNTRY)
+        font_coords = FontProperties(fname=FONTS['regular'], size=FONT_SIZE_COORDS)
+        font_attr = FontProperties(fname=FONTS['light'], size=FONT_SIZE_ATTRIBUTION)
     else:
         # Fallback to system fonts
-        font_main = FontProperties(family='monospace', weight='bold', size=60)
-        font_top = FontProperties(family='monospace', weight='bold', size=40)
-        font_sub = FontProperties(family='monospace', weight='normal', size=22)
-        font_coords = FontProperties(family='monospace', size=14)
+        font_sub = FontProperties(family='monospace', weight='normal', size=FONT_SIZE_COUNTRY)
+        font_coords = FontProperties(family='monospace', size=FONT_SIZE_COORDS)
+        font_attr = FontProperties(family='monospace', size=FONT_SIZE_ATTRIBUTION)
     
     spaced_city = "  ".join(list(city.upper()))
     
     # Dynamically adjust font size based on city name length to prevent truncation
-    base_font_size = 60
     city_char_count = len(city)
-    if city_char_count > 10:
+    if city_char_count > MAX_CITY_CHARS:
         # Scale down font size for longer names
-        scale_factor = 10 / city_char_count
-        adjusted_font_size = max(base_font_size * scale_factor, 24)  # Minimum size of 24
+        scale_factor = MAX_CITY_CHARS / city_char_count
+        adjusted_font_size = max(BASE_FONT_SIZE * scale_factor, MIN_FONT_SIZE)
     else:
-        adjusted_font_size = base_font_size
+        adjusted_font_size = BASE_FONT_SIZE
     
     if FONTS:
         font_main_adjusted = FontProperties(fname=FONTS['bold'], size=adjusted_font_size)
@@ -413,9 +474,9 @@ def create_poster(city, country, point, dist, output_file, output_format):
 
     # --- ATTRIBUTION (bottom right) ---
     if FONTS:
-        font_attr = FontProperties(fname=FONTS['light'], size=8)
+        font_attr = FontProperties(fname=FONTS['light'], size=FONT_SIZE_ATTRIBUTION)
     else:
-        font_attr = FontProperties(family='monospace', size=8)
+        font_attr = FontProperties(family='monospace', size=FONT_SIZE_ATTRIBUTION)
     
     ax.text(0.98, 0.02, "© OpenStreetMap contributors", transform=ax.transAxes,
             color=THEME['text'], alpha=0.5, ha='right', va='bottom', 
