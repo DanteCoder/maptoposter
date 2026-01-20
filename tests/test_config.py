@@ -47,9 +47,9 @@ def test_directory_paths():
 
 
 def test_default_figsize():
-    """Test default figure size is 16:9."""
-    assert DEFAULT_FIGSIZE == (16, 9)
-    assert DEFAULT_FIGSIZE[0] / DEFAULT_FIGSIZE[1] == pytest.approx(16/9)
+    """Test default figure size is 12:16 portrait (3:4 aspect ratio)."""
+    assert DEFAULT_FIGSIZE == (12, 16)
+    assert DEFAULT_FIGSIZE[0] / DEFAULT_FIGSIZE[1] == pytest.approx(12/16)
 
 
 def test_default_dpi():

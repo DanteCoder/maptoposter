@@ -33,17 +33,17 @@ python create_map_poster.py --city <city> --country <country> [options]
 
 ### Options
 
-| Option          | Short | Description                         | Default       |
-| --------------- | ----- | ----------------------------------- | ------------- |
-| `--city`        | `-c`  | City name                           | required      |
-| `--country`     | `-C`  | Country name                        | required      |
-| `--theme`       | `-t`  | Theme name                          | feature_based |
-| `--distance`    | `-d`  | Map radius in meters                | 29000         |
-| `--list-themes` |       | List all available themes           |               |
-| `--all-themes`  |       | Generate posters for all themes     |               |
-| `--format`      | `-f`  | Output format (png, svg, pdf)       | png           |
-| `--resolution`  | `-r`  | Output resolution (e.g., 3840x2160) |               |
-| `--dpi`         |       | DPI for PNG output                  | 300           |
+| Option          | Short | Description                                                                    | Default       |
+| --------------- | ----- | ------------------------------------------------------------------------------ | ------------- |
+| `--city`        | `-c`  | City name                                                                      | required      |
+| `--country`     | `-C`  | Country name                                                                   | required      |
+| `--theme`       | `-t`  | Theme name                                                                     | feature_based |
+| `--distance`    | `-d`  | Map radius in meters                                                           | 29000         |
+| `--list-themes` |       | List all available themes                                                      |               |
+| `--all-themes`  |       | Generate posters for all themes                                                |               |
+| `--format`      | `-f`  | Output format (png, svg, pdf)                                                  | png           |
+| `--resolution`  | `-r`  | Output resolution (e.g., 3840x2160)<br>_DPI will be rounded to whole integers_ |               |
+| `--dpi`         |       | DPI for PNG output                                                             | 300           |
 
 ### Examples
 

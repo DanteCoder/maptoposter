@@ -8,7 +8,7 @@ import sys
 import traceback
 
 from src import (
-    calculate_dpi_from_resolution,
+    parse_resolution,
     create_parser,
     validate_args,
     generate_single_poster,
@@ -27,14 +27,23 @@ def main():
     validate_args(args)
     
     # Determine DPI and figsize
-    figsize = DEFAULT_FIGSIZE
     if args.resolution:
-        dpi = calculate_dpi_from_resolution(args.resolution, figsize)
-        print(f"✓ Target resolution: {args.resolution} -> DPI: {dpi}")
+        # Calculate figsize from resolution
+        width_px, height_px = parse_resolution(args.resolution)
+        if args.dpi:
+            dpi = args.dpi
+            figsize = (width_px / dpi, height_px / dpi)
+            print(f"✓ Target resolution: {args.resolution} at {dpi} DPI -> Figure size: {figsize[0]:.1f}\"x{figsize[1]:.1f}\"")
+        else:
+            dpi = DEFAULT_DPI
+            figsize = (width_px / dpi, height_px / dpi)
+            print(f"✓ Target resolution: {args.resolution} at {dpi} DPI -> Figure size: {figsize[0]:.1f}\"x{figsize[1]:.1f}\"")
     elif args.dpi:
+        figsize = DEFAULT_FIGSIZE
         dpi = args.dpi
         print(f"✓ Using DPI: {dpi}")
     else:
+        figsize = DEFAULT_FIGSIZE
         dpi = DEFAULT_DPI
         print(f"✓ Using default DPI: {dpi}")
     

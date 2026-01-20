@@ -109,6 +109,15 @@ def test_parse_resolution_zero_values():
         parse_resolution("1920x0")
 
 
+def test_calculate_dpi_from_resolution_12_16():
+    """Test DPI calculation for 12:16 portrait resolution."""
+    dpi = calculate_dpi_from_resolution("3600x4800", figsize=(12, 16))
+    assert dpi == 300  # 3600 / 12 = 300
+    
+    dpi = calculate_dpi_from_resolution("2400x3200", figsize=(12, 16))
+    assert dpi == 200  # 2400 / 12 = 200
+
+
 def test_calculate_dpi_from_resolution_16_9():
     """Test DPI calculation for 16:9 resolution."""
     dpi = calculate_dpi_from_resolution("1920x1080", figsize=(16, 9))
@@ -164,16 +173,16 @@ def test_calculate_bbox_zero_distance(sample_coordinates):
 def test_calculate_bbox_aspect_ratio(sample_coordinates):
     """Test that bounding box respects aspect ratio."""
     dist = 20000
-    figsize = (16, 9)
+    figsize = (12, 16)  # Portrait aspect ratio
     
     west, south, east, north = calculate_bbox(sample_coordinates, dist, figsize)
     
-    # Width should be larger than height for 16:9
+    # Height should be larger than width for 12:16 portrait
     width = east - west
     height = north - south
     
     # Approximate aspect ratio check (accounting for latitude/longitude distortion)
-    assert width > height
+    assert height > width
 
 
 def test_calculate_bbox_equator_vs_pole():
