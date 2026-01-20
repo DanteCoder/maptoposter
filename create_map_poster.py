@@ -52,6 +52,10 @@ THEMES_DIR = "themes"
 FONTS_DIR = "fonts"
 POSTERS_DIR = "posters"
 
+# Default figure dimensions and resolution
+DEFAULT_FIGSIZE = (16, 9)  # 16:9 aspect ratio
+DEFAULT_DPI = 300
+
 # Font size constants for 16:9 landscape layout
 FONT_SIZE_CITY = 40
 FONT_SIZE_COUNTRY = 16
@@ -270,6 +274,40 @@ def get_edge_widths_by_type(G):
     
     return edge_widths
 
+def parse_resolution(resolution_str):
+    """
+    Parse resolution string (e.g., '3840x2160') and return width, height.
+    """
+    try:
+        parts = resolution_str.lower().split('x')
+        if len(parts) != 2:
+            raise ValueError("Resolution must be in format WIDTHxHEIGHT (e.g., 3840x2160)")
+        width = int(parts[0])
+        height = int(parts[1])
+        if width <= 0 or height <= 0:
+            raise ValueError("Resolution dimensions must be positive")
+        return width, height
+    except ValueError as e:
+        raise ValueError(f"Invalid resolution format: {e}")
+
+def calculate_dpi_from_resolution(resolution_str, figsize=DEFAULT_FIGSIZE):
+    """
+    Calculate DPI needed to achieve target resolution with given figsize.
+    Returns DPI value.
+    """
+    width_px, height_px = parse_resolution(resolution_str)
+    width_in, height_in = figsize
+    
+    dpi_x = width_px / width_in
+    dpi_y = height_px / height_in
+    
+    # Check if aspect ratios match
+    if abs(dpi_x - dpi_y) > 1:
+        print(f"⚠ Warning: Resolution aspect ratio ({width_px}:{height_px}) doesn't perfectly match figure aspect ratio ({width_in}:{height_in})")
+        print(f"  Using DPI: {dpi_x:.1f}")
+    
+    return int(dpi_x)
+
 def get_coordinates(city, country):
     """
     Fetches coordinates for a given city and country using geopy.
@@ -345,7 +383,7 @@ def fetch_features_bbox(bbox, tags, name):
         print(f"OSMnx error while fetching features: {e}")
         return None
 
-def create_poster(city, country, point, dist, output_file, output_format):
+def create_poster(city, country, point, dist, output_file, output_format, dpi=DEFAULT_DPI, figsize=DEFAULT_FIGSIZE):
     print(f"\nGenerating map for {city}, {country}...")
     
     # Calculate 16:9 bounding box where dist is the longest side (width)
@@ -355,8 +393,11 @@ def create_poster(city, country, point, dist, output_file, output_format):
     # 1 degree latitude ≈ 111km
     # 1 degree longitude ≈ 111km * cos(latitude)
     # For 16:9, horizontal (longest side) = dist, vertical = dist * (9/16)
+    width_ratio, height_ratio = figsize
+    aspect_ratio = height_ratio / width_ratio
+    
     lon_dist_deg = dist / (111000 * np.cos(np.radians(lat)))
-    lat_dist_deg = (dist * 9/16) / 111000
+    lat_dist_deg = (dist * aspect_ratio) / 111000
     
     north = lat + lat_dist_deg
     south = lat - lat_dist_deg
@@ -386,8 +427,8 @@ def create_poster(city, country, point, dist, output_file, output_format):
     
     # 2. Setup Plot
     print("Rendering map...")
-    # Set figsize to 16:9 aspect ratio (landscape)
-    fig, ax = plt.subplots(figsize=(16, 9), facecolor=THEME['bg'])
+    # Set figsize to specified aspect ratio (default 16:9 landscape)
+    fig, ax = plt.subplots(figsize=figsize, facecolor=THEME['bg'])
     ax.set_facecolor(THEME['bg'])
     ax.set_position([0, 0, 1, 1])
     
@@ -490,7 +531,10 @@ def create_poster(city, country, point, dist, output_file, output_format):
 
     # DPI matters mainly for raster formats
     if fmt == "png":
-        save_kwargs["dpi"] = 300
+        save_kwargs["dpi"] = dpi
+        width_px = int(figsize[0] * dpi)
+        height_px = int(figsize[1] * dpi)
+        print(f"  Resolution: {width_px}x{height_px} pixels ({dpi} DPI)")
 
     plt.savefig(output_file, format=fmt, **save_kwargs)
 
@@ -598,6 +642,8 @@ Examples:
     parser.add_argument('--distance', '-d', type=int, default=29000, help='Map radius in meters (default: 29000)')
     parser.add_argument('--list-themes', action='store_true', help='List all available themes')
     parser.add_argument('--format', '-f', default='png', choices=['png', 'svg', 'pdf'],help='Output format for the poster (default: png)')
+    parser.add_argument('--resolution', '-r', type=str, help='Output resolution in pixels (e.g., 3840x2160). Cannot be used with --dpi.')
+    parser.add_argument('--dpi', type=int, help=f'DPI for PNG output (default: {DEFAULT_DPI}). Cannot be used with --resolution.')
     
     args = parser.parse_args()
     
@@ -624,6 +670,23 @@ Examples:
         print(f"Available themes: {', '.join(available_themes)}")
         os.sys.exit(1)
     
+    # Validate resolution and dpi arguments
+    if args.resolution and args.dpi:
+        print("Error: Cannot specify both --resolution and --dpi. Choose one.")
+        os.sys.exit(1)
+    
+    # Determine DPI and figsize
+    figsize = DEFAULT_FIGSIZE
+    if args.resolution:
+        dpi = calculate_dpi_from_resolution(args.resolution, figsize)
+        print(f"✓ Target resolution: {args.resolution} -> DPI: {dpi}")
+    elif args.dpi:
+        dpi = args.dpi
+        print(f"✓ Using DPI: {dpi}")
+    else:
+        dpi = DEFAULT_DPI
+        print(f"✓ Using default DPI: {dpi}")
+    
     print("=" * 50)
     print("City Map Poster Generator")
     print("=" * 50)
@@ -635,7 +698,7 @@ Examples:
     try:
         coords = get_coordinates(args.city, args.country)
         output_file = generate_output_filename(args.city, args.theme, args.format)
-        create_poster(args.city, args.country, coords, args.distance, output_file, args.format)
+        create_poster(args.city, args.country, coords, args.distance, output_file, args.format, dpi=dpi, figsize=figsize)
         
         print("\n" + "=" * 50)
         print("✓ Poster generation complete!")
