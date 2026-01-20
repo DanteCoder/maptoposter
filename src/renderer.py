@@ -160,7 +160,7 @@ def render_poster(city, country, point, graph, water, parks, theme, fonts,
     # Setup Plot
     fig, ax = plt.subplots(figsize=figsize, facecolor=theme['bg'])
     ax.set_facecolor(theme['bg'])
-    ax.set_position([0, 0, 1, 1])
+    ax.set_position((0, 0, 1, 1))
     ax.set_aspect('equal')
     
     # Plot Layers
