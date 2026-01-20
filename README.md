@@ -7,18 +7,17 @@ Generate beautiful, minimalist map posters for any city in the world.
 
 ## Examples
 
-
-| Country      | City           | Theme           | Poster |
-|:------------:|:--------------:|:---------------:|:------:|
-| USA          | San Francisco  | sunset          | <img src="posters/san_francisco_sunset_20260108_184122.png" width="250"> |
-| Spain        | Barcelona      | warm_beige      | <img src="posters/barcelona_warm_beige_20260108_172924.png" width="250"> |
-| Italy        | Venice         | blueprint       | <img src="posters/venice_blueprint_20260108_165527.png" width="250"> |
-| Japan        | Tokyo          | japanese_ink    | <img src="posters/tokyo_japanese_ink_20260108_165830.png" width="250"> |
-| India        | Mumbai         | contrast_zones  | <img src="posters/mumbai_contrast_zones_20260108_170325.png" width="250"> |
-| Morocco      | Marrakech      | terracotta      | <img src="posters/marrakech_terracotta_20260108_180821.png" width="250"> |
-| Singapore    | Singapore      | neon_cyberpunk  | <img src="posters/singapore_neon_cyberpunk_20260108_184503.png" width="250"> |
-| Australia    | Melbourne      | forest          | <img src="posters/melbourne_forest_20260108_181459.png" width="250"> |
-| UAE          | Dubai          | midnight_blue   | <img src="posters/dubai_midnight_blue_20260108_174920.png" width="250"> |
+|  Country  |     City      |     Theme      |                                    Poster                                    |
+| :-------: | :-----------: | :------------: | :--------------------------------------------------------------------------: |
+|    USA    | San Francisco |     sunset     |   <img src="posters/san_francisco_sunset_20260108_184122.png" width="250">   |
+|   Spain   |   Barcelona   |   warm_beige   |   <img src="posters/barcelona_warm_beige_20260108_172924.png" width="250">   |
+|   Italy   |    Venice     |   blueprint    |     <img src="posters/venice_blueprint_20260108_165527.png" width="250">     |
+|   Japan   |     Tokyo     |  japanese_ink  |    <img src="posters/tokyo_japanese_ink_20260108_165830.png" width="250">    |
+|   India   |    Mumbai     | contrast_zones |  <img src="posters/mumbai_contrast_zones_20260108_170325.png" width="250">   |
+|  Morocco  |   Marrakech   |   terracotta   |   <img src="posters/marrakech_terracotta_20260108_180821.png" width="250">   |
+| Singapore |   Singapore   | neon_cyberpunk | <img src="posters/singapore_neon_cyberpunk_20260108_184503.png" width="250"> |
+| Australia |   Melbourne   |     forest     |     <img src="posters/melbourne_forest_20260108_181459.png" width="250">     |
+|    UAE    |     Dubai     | midnight_blue  |   <img src="posters/dubai_midnight_blue_20260108_174920.png" width="250">    |
 
 ## Installation
 
@@ -34,13 +33,17 @@ python create_map_poster.py --city <city> --country <country> [options]
 
 ### Options
 
-| Option | Short | Description | Default |
-|--------|-------|-------------|---------|
-| `--city` | `-c` | City name | required |
-| `--country` | `-C` | Country name | required |
-| `--theme` | `-t` | Theme name | feature_based |
-| `--distance` | `-d` | Map radius in meters | 29000 |
-| `--list-themes` | | List all available themes | |
+| Option          | Short | Description                         | Default       |
+| --------------- | ----- | ----------------------------------- | ------------- |
+| `--city`        | `-c`  | City name                           | required      |
+| `--country`     | `-C`  | Country name                        | required      |
+| `--theme`       | `-t`  | Theme name                          | feature_based |
+| `--distance`    | `-d`  | Map radius in meters                | 29000         |
+| `--list-themes` |       | List all available themes           |               |
+| `--all-themes`  |       | Generate posters for all themes     |               |
+| `--format`      | `-f`  | Output format (png, svg, pdf)       | png           |
+| `--resolution`  | `-r`  | Output resolution (e.g., 3840x2160) |               |
+| `--dpi`         |       | DPI for PNG output                  | 300           |
 
 ### Examples
 
@@ -61,7 +64,7 @@ python create_map_poster.py -c "Moscow" -C "Russia" -t noir -d 12000          # 
 # Organic old cities
 python create_map_poster.py -c "Tokyo" -C "Japan" -t japanese_ink -d 15000    # Dense organic streets
 python create_map_poster.py -c "Marrakech" -C "Morocco" -t terracotta -d 5000 # Medina maze
-python create_map_poster.py -c "Rome" -C "Italy" -t warm_beige -d 8000        # Ancient layout
+python create_map_poster.py -c "Rome" -C "Italy" -t warm_beige -d 8000        # Ancient street layout
 
 # Coastal cities
 python create_map_poster.py -c "San Francisco" -C "USA" -t sunset -d 10000    # Peninsula grid
@@ -74,46 +77,68 @@ python create_map_poster.py -c "Budapest" -C "Hungary" -t copper_patina -d 8000 
 
 # List available themes
 python create_map_poster.py --list-themes
+
+# Generate all themes for a city
+python create_map_poster.py --city "Tokyo" --country "Japan" --all-themes
+
+# Custom resolution output
+python create_map_poster.py -c "Paris" -C "France" -t noir -r 3840x2160
+
+# Custom DPI output
+python create_map_poster.py -c "London" -C "UK" -t blueprint --dpi 600
+
+# SVG output for vector editing
+python create_map_poster.py -c "Amsterdam" -C "Netherlands" -t ocean -f svg
 ```
 
 ### Distance Guide
 
-| Distance | Best for |
-|----------|----------|
-| 4000-6000m | Small/dense cities (Venice, Amsterdam center) |
-| 8000-12000m | Medium cities, focused downtown (Paris, Barcelona) |
-| 15000-20000m | Large metros, full city view (Tokyo, Mumbai) |
+| Distance     | Best for                                           |
+| ------------ | -------------------------------------------------- |
+| 4000-6000m   | Small/dense cities (Venice, Amsterdam center)      |
+| 8000-12000m  | Medium cities, focused downtown (Paris, Barcelona) |
+| 15000-20000m | Large metros, full city view (Tokyo, Mumbai)       |
 
 ## Themes
 
 17 themes available in `themes/` directory:
 
-| Theme | Style |
-|-------|-------|
-| `feature_based` | Classic black & white with road hierarchy |
-| `gradient_roads` | Smooth gradient shading |
-| `contrast_zones` | High contrast urban density |
-| `noir` | Pure black background, white roads |
-| `midnight_blue` | Navy background with gold roads |
-| `blueprint` | Architectural blueprint aesthetic |
-| `neon_cyberpunk` | Dark with electric pink/cyan |
-| `warm_beige` | Vintage sepia tones |
-| `pastel_dream` | Soft muted pastels |
-| `japanese_ink` | Minimalist ink wash style |
-| `forest` | Deep greens and sage |
-| `ocean` | Blues and teals for coastal cities |
-| `terracotta` | Mediterranean warmth |
-| `sunset` | Warm oranges and pinks |
-| `autumn` | Seasonal burnt oranges and reds |
-| `copper_patina` | Oxidized copper aesthetic |
-| `monochrome_blue` | Single blue color family |
+| Theme             | Description                                                                 |
+| ----------------- | --------------------------------------------------------------------------- |
+| `autumn`          | Burnt oranges, deep reds, golden yellows - seasonal warmth                  |
+| `blueprint`       | Classic architectural blueprint - technical drawing aesthetic               |
+| `contrast_zones`  | Strong contrast showing urban density - darker in center, lighter at edges  |
+| `copper_patina`   | Oxidized copper aesthetic - teal-green patina with copper accents           |
+| `feature_based`   | Different shades for different road types and features with clear hierarchy |
+| `forest`          | Deep greens and sage tones - organic botanical aesthetic                    |
+| `gradient_roads`  | Smooth gradient from dark center to light edges with subtle features        |
+| `japanese_ink`    | Traditional ink wash inspired - minimalist with subtle red accent           |
+| `midnight_blue`   | Deep navy background with gold/copper roads - luxury atlas aesthetic        |
+| `monochrome_blue` | Single blue color family with varying saturation - clean and cohesive       |
+| `neon_cyberpunk`  | Dark background with electric pink/cyan - bold night city vibes             |
+| `noir`            | Pure black background with white/gray roads - modern gallery aesthetic      |
+| `ocean`           | Various blues and teals - perfect for coastal cities                        |
+| `pastel_dream`    | Soft muted pastels with dusty blues and mauves - dreamy artistic aesthetic  |
+| `sunset`          | Warm oranges and pinks on soft peach - dreamy golden hour aesthetic         |
+| `terracotta`      | Mediterranean warmth - burnt orange and clay tones on cream                 |
+| `warm_beige`      | Earthy warm neutrals with sepia tones - vintage map aesthetic               |
 
 ## Output
 
-Posters are saved to `posters/` directory with format:
+Posters are saved to `posters/{city}/` directory with format:
+
 ```
-{city}_{theme}_{YYYYMMDD_HHMMSS}.png
+{city}_{theme}_{YYYYMMDD_HHMMSS}.{format}
 ```
+
+Default output:
+
+- **Format**: PNG (also supports SVG and PDF)
+- **Resolution**: 4800×2700 pixels (16:9 aspect ratio at 300 DPI)
+- **Dimensions**: 16" × 9" at 300 DPI
+
+Custom resolution example: `--resolution 3840x2160` (4K)  
+Custom DPI example: `--dpi 600` (high quality print)
 
 ## Adding Custom Themes
 
@@ -121,31 +146,45 @@ Create a JSON file in `themes/` directory:
 
 ```json
 {
-  "name": "My Theme",
-  "description": "Description of the theme",
-  "bg": "#FFFFFF",
-  "text": "#000000",
-  "gradient_color": "#FFFFFF",
-  "water": "#C0C0C0",
-  "parks": "#F0F0F0",
-  "road_motorway": "#0A0A0A",
-  "road_primary": "#1A1A1A",
-  "road_secondary": "#2A2A2A",
-  "road_tertiary": "#3A3A3A",
-  "road_residential": "#4A4A4A",
-  "road_default": "#3A3A3A"
+    "name": "My Theme",
+    "description": "Description of the theme",
+    "bg": "#FFFFFF",
+    "text": "#000000",
+    "gradient_color": "#FFFFFF",
+    "water": "#C0C0C0",
+    "parks": "#F0F0F0",
+    "road_motorway": "#0A0A0A",
+    "road_primary": "#1A1A1A",
+    "road_secondary": "#2A2A2A",
+    "road_tertiary": "#3A3A3A",
+    "road_residential": "#4A4A4A",
+    "road_default": "#3A3A3A"
 }
 ```
 
 ## Project Structure
 
 ```
-map_poster/
-├── create_map_poster.py          # Main script
-├── themes/               # Theme JSON files
-├── fonts/                # Roboto font files
-├── posters/              # Generated posters
-└── README.md
+maptoposter/
+├── create_map_poster.py          # Main entry point
+├── requirements.txt              # Python dependencies
+├── pytest.ini                    # Test configuration
+├── src/
+│   ├── __init__.py              # Package initialization
+│   ├── cli.py                   # Command-line interface
+│   ├── config.py                # Configuration constants
+│   ├── geocoding.py             # City coordinate lookup
+│   ├── data_fetcher.py          # OSM data fetching
+│   ├── renderer.py              # Map rendering logic
+│   ├── poster_generator.py      # Poster generation pipeline
+│   ├── theme.py                 # Theme loading and management
+│   ├── cache.py                 # Caching system
+│   └── utils.py                 # Utility functions
+├── tests/                       # Unit tests
+├── themes/                      # Theme JSON files
+├── fonts/                       # Roboto font files
+├── cache/                       # Cached geocoding/OSM data
+└── posters/                     # Generated posters (organized by city)
 ```
 
 ## Hacker's Guide
@@ -169,14 +208,17 @@ Quick reference for contributors who want to extend or modify the script.
 
 ### Key Functions
 
-| Function | Purpose | Modify when... |
-|----------|---------|----------------|
-| `get_coordinates()` | City → lat/lon via Nominatim | Switching geocoding provider |
-| `create_poster()` | Main rendering pipeline | Adding new map layers |
-| `get_edge_colors_by_type()` | Road color by OSM highway tag | Changing road styling |
-| `get_edge_widths_by_type()` | Road width by importance | Adjusting line weights |
-| `create_gradient_fade()` | Top/bottom fade effect | Modifying gradient overlay |
-| `load_theme()` | JSON theme → dict | Adding new theme properties |
+| Function                    | File                | Purpose                           | Modify when...               |
+| --------------------------- | ------------------- | --------------------------------- | ---------------------------- |
+| `get_coordinates()`         | geocoding.py        | City → lat/lon via Nominatim      | Switching geocoding provider |
+| `fetch_map_data()`          | data_fetcher.py     | Fetch OSM graph, water, and parks | Adding new data layers       |
+| `render_poster()`           | renderer.py         | Main rendering pipeline           | Adding new map features      |
+| `get_edge_colors_by_type()` | renderer.py         | Assign colors by highway type     | Changing road color styling  |
+| `get_edge_widths_by_type()` | renderer.py         | Assign widths by highway type     | Adjusting line weights       |
+| `create_gradient_fade()`    | renderer.py         | Edge fade effect                  | Modifying gradient overlay   |
+| `load_theme()`              | theme.py            | Load JSON theme → dict            | Adding theme properties      |
+| `generate_single_poster()`  | poster_generator.py | Complete single poster pipeline   | Changing generation workflow |
+| `generate_all_themes()`     | poster_generator.py | Batch generate all themes         | Modifying batch processing   |
 
 ### Rendering Layers (z-order)
 
@@ -203,6 +245,7 @@ residential, living_street  → Thinnest (0.4), lightest
 ### Adding New Features
 
 **New map layer (e.g., railways):**
+
 ```python
 # In create_poster(), after parks fetch:
 try:
@@ -216,6 +259,7 @@ if railways is not None and not railways.empty:
 ```
 
 **New theme property:**
+
 1. Add to theme JSON: `"railway": "#FF0000"`
 2. Use in code: `THEME['railway']`
 3. Add fallback in `load_theme()` default dict
@@ -223,6 +267,7 @@ if railways is not None and not railways.empty:
 ### Typography Positioning
 
 All text uses `transform=ax.transAxes` (0-1 normalized coordinates):
+
 ```
 y=0.14  City name (spaced letters)
 y=0.125 Decorative line
