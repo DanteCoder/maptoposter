@@ -1,7 +1,6 @@
 """Command-line interface and argument parsing."""
 
 import argparse
-import os
 import sys
 
 from .theme import get_available_themes
